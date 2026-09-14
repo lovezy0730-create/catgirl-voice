@@ -60,6 +60,14 @@ godot --path <本目录路径>
 
 启动时会从角色立绘里裁一块头部特写（默认取画布水平 43.4% 为中心、边长取短边的 52%），用 `DisplayServer.set_icon` 设成窗口图标，所以任务栏上显示的是角色而不是引擎默认图标。没有角色立绘时保留默认图标。
 
+## 待机动作
+
+- **呼吸**：`main.tscn` 的 `idle_breathe` 同时动三条轨道 —— 上下浮动、轻微挤压（`scale` 1 → 1.012/0.98）、左右摆动（`rotation` ±0.018 弧度），周期 3.6 秒。
+- **眨眼**：`eyes_half.png` + `eyes_closed.png` 两张叠图，间隔 3~8 秒随机播放半睁 → 闭 → 半睁 → 睁。
+- **耳朵抖动**：角色目录里放 `ears.png`（只改耳朵的叠图）就会每 5~12 秒抖两下；没有这个文件就自动跳过。
+
+三张叠图都由 `tools/prepare-character-art.mjs` 从模型生成的变体图加工而来，做法见 [character/README.md](character/README.md)。
+
 ## 结构
 
 ```text

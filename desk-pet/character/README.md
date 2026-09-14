@@ -10,12 +10,25 @@
 character/<角色名>/
 ├── base.png         主立绘（睁眼），必需
 ├── eyes_half.png    半睁眼叠图，可选
-└── eyes_closed.png  闭眼叠图，可选
+├── eyes_closed.png  闭眼叠图，可选
+└── ears.png         耳朵叠图，可选（放进来就开启耳朵抖动）
 ```
 
 `main.gd` 顶部的 `CHARACTER_DIR` 决定当前用哪个目录，默认指向 `res://character/elaina_catgirl`。目录里没有 `base.png` 时，桌宠继续用场景自带的 `catgirl_default/mascot.svg`，空目录不会报错。
 
 `eyes_half.png` 与 `eyes_closed.png` 同时存在时自动开启眨眼：半睁 → 闭 → 半睁 → 睁，间隔 3~8 秒随机。
+
+`ears.png` 存在时每 5~12 秒抖两下耳朵。
+
+## 叠图是怎么做出来的
+
+模型生成的变体图往往整张都重绘过，直接叠上去会整只重影，所以要先压成「只覆盖变化区域」的叠图：
+
+```sh
+node ../tools/prepare-character-art.mjs <角色目录> 640 0.45 4 5
+```
+
+脚本会找 `base.source.png` / `eyes_half.source.png` / `eyes_closed.source.png` / `ears.source.png`，输出可直接使用的 `base.png`、`eyes_half.png`、`eyes_closed.png`、`ears.png`。它做四件事：算差异密度找变化区、限制在脸部或耳朵横带、与主图不透明区求交并往内收（保证背景零污染）、膨胀加羽化。
 
 ## 叠图要求
 

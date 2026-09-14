@@ -27,6 +27,8 @@ const CHARACTER_DIR := "res://character/elaina_catgirl"
 const BASE_FILE := "base.png"
 const EYES_HALF_FILE := "eyes_half.png"
 const EYES_CLOSED_FILE := "eyes_closed.png"
+## 可选：只改耳朵的叠图，放进角色目录就会开启耳朵抖动。
+const EARS_FILE := "ears.png"
 
 ## 立绘缩放到的像素高度，按 480x600 的窗口留出气泡空间。
 const TARGET_SPRITE_HEIGHT := 560.0
@@ -34,6 +36,7 @@ const TARGET_SPRITE_HEIGHT := 560.0
 const BUBBLE_HOLD_SECONDS := 3.5
 const BLINK_HALF_SECONDS := 0.06
 const BLINK_CLOSED_SECONDS := 0.09
+const EAR_TWITCH_SECONDS := 0.14
 
 ## DeepSeek 余额：优先读环境变量，其次读 Codex 的 config.toml，避免把 Key 写进工程。
 const DEEPSEEK_BALANCE_URL := "https://api.deepseek.com/user/balance"
@@ -71,6 +74,10 @@ var _eyes: Sprite2D
 var _eyes_half: Texture2D
 var _eyes_closed: Texture2D
 var _blink_timer: Timer
+var _ears: Sprite2D
+var _ears_texture: Texture2D
+var _ears_timer: Timer
+var _ears_twitching := false
 var _balance_request: HTTPRequest
 var _balance_timer: Timer
 var _balance_text := ""
@@ -424,6 +431,7 @@ func apply_character_art() -> void:
 	print("[猫娘桌宠] 使用角色立绘 %s（%dx%d，缩放 %.3f）" % [base_path, texture.get_width(), texture.get_height(), body.scale.x])
 	_apply_window_icon(texture)
 	_setup_eyes()
+	_setup_ears()
 
 
 ## 任务栏图标换成角色头部特写，让桌宠图标也是这位角色。
@@ -494,6 +502,59 @@ func _schedule_next_blink() -> void:
 		_blink_timer.timeout.connect(_on_blink_timer_timeout)
 	_blink_timer.wait_time = randf_range(3.0, 8.0)
 	_blink_timer.start()
+
+
+## 耳朵叠图可选：有 ears.png 就隔几秒抖一下耳朵。
+func _setup_ears() -> void:
+	var ears_path := "%s/%s" % [CHARACTER_DIR, EARS_FILE]
+	_ears_texture = _load_texture(ears_path)
+	if _ears_texture == null:
+		print("[猫娘桌宠] 没有 %s，跳过耳朵抖动" % ears_path)
+		return
+	if _ears_texture.get_size() != body.texture.get_size():
+		push_warning("耳朵叠图尺寸与主图不一致，跳过耳朵抖动：%s" % ears_path)
+		_ears_texture = null
+		return
+	print("[猫娘桌宠] 耳朵叠图已加载：%s" % ears_path)
+	_ears = Sprite2D.new()
+	_ears.name = "Ears"
+	_ears.texture = _ears_texture
+	_ears.scale = body.scale
+	_ears.z_index = 1
+	_ears.visible = false
+	body.get_parent().add_child(_ears)
+	_schedule_next_ear_twitch()
+
+
+func _schedule_next_ear_twitch() -> void:
+	if _ears == null:
+		return
+	if _ears_timer == null:
+		_ears_timer = Timer.new()
+		_ears_timer.name = "EarsTimer"
+		_ears_timer.one_shot = true
+		add_child(_ears_timer)
+		_ears_timer.timeout.connect(_on_ears_timer_timeout)
+	_ears_timer.wait_time = randf_range(5.0, 12.0)
+	_ears_timer.start()
+
+
+func _on_ears_timer_timeout() -> void:
+	await twitch_ears()
+	_schedule_next_ear_twitch()
+
+
+## 抖两下耳朵：抬起 -> 放下 -> 抬起 -> 放下。
+func twitch_ears() -> void:
+	if _ears == null or _ears_twitching:
+		return
+	_ears_twitching = true
+	for _round in 2:
+		_ears.visible = true
+		await get_tree().create_timer(EAR_TWITCH_SECONDS).timeout
+		_ears.visible = false
+		await get_tree().create_timer(EAR_TWITCH_SECONDS * 0.6).timeout
+	_ears_twitching = false
 
 
 func _on_blink_timer_timeout() -> void:
