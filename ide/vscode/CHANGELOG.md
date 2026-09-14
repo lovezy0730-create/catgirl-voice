@@ -1,5 +1,10 @@
 # 更新记录
 
+## 1.2.1
+
+- 桌宠会自动发现工作区里的角色立绘：打开含 `desk-pet/character/<角色名>/base.png` 的工程时直接使用，不再依赖用户级设置。
+- 多个角色时优先选带 `eyes_half.png` 与 `eyes_closed.png` 的那个，其次按角色名排序。
+
 ## 1.2.0
 
 - 自定义立绘支持眨眼叠图：同目录放 `eyes_half.png` 与 `eyes_closed.png` 即自动播放眨眼动画。

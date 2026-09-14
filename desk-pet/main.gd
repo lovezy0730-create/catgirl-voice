@@ -117,29 +117,47 @@ func speak() -> void:
 ## 角色目录里有 base.png 时换成它，并按高度自适应缩放；没有就保留场景自带的立绘。
 func apply_character_art() -> void:
 	var base_path := "%s/%s" % [CHARACTER_DIR, BASE_FILE]
-	if not ResourceLoader.exists(base_path):
-		return
-	var texture := load(base_path) as Texture2D
+	var texture := _load_texture(base_path)
 	if texture == null:
-		push_warning("角色立绘加载失败：%s" % base_path)
+		print("[猫娘桌宠] 未找到角色立绘 %s，继续使用自带的原创立绘" % base_path)
 		return
 	body.texture = texture
 	var height := float(texture.get_height())
 	if height > 0.0:
 		body.scale = Vector2.ONE * (TARGET_SPRITE_HEIGHT / height)
+	print("[猫娘桌宠] 使用角色立绘 %s（%dx%d，缩放 %.3f）" % [base_path, texture.get_width(), texture.get_height(), body.scale.x])
 	_setup_eyes()
+
+
+## 读取立绘：先走 Godot 资源系统；没有导入缓存时直接用 Image 读文件，
+## 这样即使没在编辑器里导入过、或者直接用 --path 跑工程，也能显示立绘。
+func _load_texture(resource_path: String) -> Texture2D:
+	if ResourceLoader.exists(resource_path):
+		var imported := load(resource_path) as Texture2D
+		if imported != null:
+			return imported
+	var absolute := ProjectSettings.globalize_path(resource_path)
+	if not FileAccess.file_exists(absolute):
+		return null
+	var image := Image.load_from_file(absolute)
+	if image == null:
+		push_warning("立绘无法解码：%s" % absolute)
+		return null
+	print("[猫娘桌宠] %s 还没导入，改为直接从文件读取" % resource_path)
+	return ImageTexture.create_from_image(image)
 
 
 func _setup_eyes() -> void:
 	var half_path := "%s/%s" % [CHARACTER_DIR, EYES_HALF_FILE]
 	var closed_path := "%s/%s" % [CHARACTER_DIR, EYES_CLOSED_FILE]
-	if not ResourceLoader.exists(half_path) or not ResourceLoader.exists(closed_path):
-		return
-	_eyes_half = load(half_path) as Texture2D
-	_eyes_closed = load(closed_path) as Texture2D
+	_eyes_half = _load_texture(half_path)
+	_eyes_closed = _load_texture(closed_path)
 	if _eyes_half == null or _eyes_closed == null:
-		push_warning("睁眼叠图加载失败，跳过眨眼：%s / %s" % [half_path, closed_path])
+		_eyes_half = null
+		_eyes_closed = null
+		print("[猫娘桌宠] 没有找到成对的眨眼叠图，跳过眨眼")
 		return
+	print("[猫娘桌宠] 眨眼叠图已加载：%s / %s" % [half_path, closed_path])
 	_eyes = Sprite2D.new()
 	_eyes.name = "Eyes"
 	_eyes.texture = _eyes_half

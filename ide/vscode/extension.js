@@ -83,9 +83,10 @@ function openPetPanel(context) {
 
   const settings = configuration()
   const spritePath = (settings.get('pet.spritePath', '') || '').trim()
+  const resolved = resolveSpritePath(settings, spritePath)
   const localResourceRoots = [vscode.Uri.joinPath(context.extensionUri, 'media')]
-  if (spritePath && fs.existsSync(spritePath)) {
-    localResourceRoots.push(vscode.Uri.file(path.dirname(spritePath)))
+  if (resolved) {
+    localResourceRoots.push(vscode.Uri.file(path.dirname(resolved)))
   }
   const panel = vscode.window.createWebviewPanel(
     'catgirlVoicePet',
@@ -101,7 +102,30 @@ function openPetPanel(context) {
   panel.onDidDispose(() => {
     if (currentPanel === panel) currentPanel = undefined
   })
-  panel.webview.html = renderPetHtml(panel.webview, context.extensionUri, settings, spritePath)
+  panel.webview.html = renderPetHtml(panel.webview, context.extensionUri, settings, resolved ?? '')
+}
+
+/**
+ * 立绘优先用显式配置；没配或文件不在时，去已打开的工作区里找工程自带的角色：
+ * `<工作区>/desk-pet/character/<角色名>/base.png`，带眨眼叠图的角色优先。
+ * 这样打开本项目就能直接看到角色立绘，不依赖用户级设置。
+ */
+function resolveSpritePath(settings, configured) {
+  if (configured && fs.existsSync(configured)) return configured
+  const candidates = []
+  for (const folder of vscode.workspace.workspaceFolders ?? []) {
+    const characterRoot = path.join(folder.uri.fsPath, 'desk-pet', 'character')
+    if (!fs.existsSync(characterRoot)) continue
+    for (const entry of fs.readdirSync(characterRoot, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue
+      const base = path.join(characterRoot, entry.name, 'base.png')
+      if (!fs.existsSync(base)) continue
+      const eyes = findSibling(path.dirname(base), 'eyes_half') && findSibling(path.dirname(base), 'eyes_closed')
+      candidates.push({ base, score: eyes ? 1 : 0, name: entry.name })
+    }
+  }
+  candidates.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+  return candidates[0]?.base
 }
 
 function renderPetHtml(webview, extensionUri, settings, spritePath) {

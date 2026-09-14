@@ -2,7 +2,7 @@
   "name": "catgirl-voice-ide",
   "displayName": "猫娘语气 IDE",
   "description": "猫娘风格的 VS Code 配色（樱夜 / 奶咖）与一个会撒娇的猫娘桌宠面板。",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "publisher": "lovezy0730-create",
   "license": "MIT",
   "icon": "media/icon.png",
