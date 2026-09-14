@@ -1,0 +1,122 @@
+{
+  "name": "catgirl-voice-ide",
+  "displayName": "猫娘语气 IDE",
+  "description": "猫娘风格的 VS Code 配色（樱夜 / 奶咖）与一个会撒娇的猫娘桌宠面板。",
+  "version": "1.1.0",
+  "publisher": "lovezy0730-create",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Themes",
+    "Other"
+  ],
+  "keywords": [
+    "theme",
+    "catgirl",
+    "pink",
+    "pastel",
+    "desktop pet",
+    "猫娘"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "themes": [
+      {
+        "label": "猫娘·樱夜",
+        "uiTheme": "vs-dark",
+        "path": "./themes/catgirl-sakura-night-color-theme.json"
+      },
+      {
+        "label": "猫娘·奶咖",
+        "uiTheme": "vs",
+        "path": "./themes/catgirl-neko-latte-color-theme.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "catgirlVoice.applyTheme",
+        "title": "猫娘语气：应用猫娘配色",
+        "category": "猫娘语气"
+      },
+      {
+        "command": "catgirlVoice.openPet",
+        "title": "猫娘桌宠：打开面板",
+        "category": "猫娘语气"
+      },
+      {
+        "command": "catgirlVoice.pickSprite",
+        "title": "猫娘桌宠：选择自定义立绘",
+        "category": "猫娘语气"
+      },
+      {
+        "command": "catgirlVoice.resetSprite",
+        "title": "猫娘桌宠：恢复默认立绘",
+        "category": "猫娘语气"
+      }
+    ],
+    "configuration": {
+      "title": "猫娘语气",
+      "properties": {
+        "catgirlVoice.theme.variant": {
+          "type": "string",
+          "enum": [
+            "dark",
+            "light"
+          ],
+          "enumDescriptions": [
+            "猫娘·樱夜（深色）",
+            "猫娘·奶咖（浅色）"
+          ],
+          "default": "dark",
+          "description": "「应用猫娘配色」使用的主题变体。"
+        },
+        "catgirlVoice.pet.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "是否启用猫娘桌宠面板命令。"
+        },
+        "catgirlVoice.pet.spritePath": {
+          "type": "string",
+          "default": "",
+          "description": "自定义立绘的本地文件路径（png / jpg / webp / gif / svg）。留空则使用内置原创猫娘立绘。"
+        },
+        "catgirlVoice.pet.scale": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0.3,
+          "maximum": 3,
+          "description": "桌宠显示比例。"
+        },
+        "catgirlVoice.pet.speechIntervalMs": {
+          "type": "number",
+          "default": 9000,
+          "minimum": 2000,
+          "description": "桌宠自己说话的时间间隔（毫秒）。"
+        },
+        "catgirlVoice.pet.lines": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "今天也要好好写代码哦喵～",
+            "编译不过的时候，先摸摸猫耳朵喵～",
+            "这个配色是不是粉粉的很可爱喵～",
+            "困了就去睡觉喵～",
+            "提交之前记得跑测试喵～",
+            "忘了带分号也没关系，我原谅你了喵～"
+          ],
+          "description": "桌宠随机说的话。"
+        },
+        "catgirlVoice.pet.statusBar": {
+          "type": "boolean",
+          "default": false,
+          "description": "在状态栏放一个「喵～」入口，点一下打开桌宠。"
+        }
+      }
+    }
+  }
+}

@@ -1,7 +1,7 @@
 {
   "name": "catgirl-voice",
-  "version": "1.0.0",
-  "description": "可爱猫娘语气人格：让面向用户的回复每句话结尾都带上喵，并可导出为跨平台人格提示。",
+  "version": "1.1.0",
+  "description": "可爱猫娘语气人格：让面向用户的回复每句话结尾都带上喵～，附带猫娘风格 IDE 配色、桌宠面板与可导出为跨平台人格提示。",
   "author": {
     "name": "Carlton Benzol"
   },
@@ -10,21 +10,24 @@
     "tone",
     "catgirl",
     "voice",
-    "portable"
+    "portable",
+    "ide-theme",
+    "desktop-pet"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "猫娘语气",
-    "shortDescription": "把回复切换成可爱猫娘口吻，每句话结尾都带上喵",
-    "longDescription": "内置 catgirl-voice 技能：对话中面向用户的话术变成可爱猫娘口吻，每句话结尾带「喵」；代码、命令、路径、写入文件的内容、提交信息与授权提问保持原样。附带一份不依赖平台的 catgirl-persona.md，可整段复制到其他 agent 使用。",
+    "shortDescription": "把回复切换成可爱猫娘口吻，每句话结尾都带上喵～，并附赠猫娘 IDE 配色与桌宠",
+    "longDescription": "内置 catgirl-voice 技能：对话中面向用户的话术变成可爱猫娘口吻，每句话结尾带「喵～」；代码、命令、路径、写入文件的内容、提交信息与授权提问保持原样。附带一份不依赖平台的 catgirl-persona.md，可整段复制到其他 agent 使用；另外附赠 catgirl-ide-style 技能、猫娘风格 VS Code 配色（樱夜 / 奶咖）与猫娘桌宠。",
     "developerName": "Carlton Benzol",
     "category": "Productivity",
     "capabilities": [
       "Write"
     ],
     "defaultPrompt": [
-      "用猫娘语气回答我，每句话结尾都带上喵",
-      "把这个猫娘语气导出给别的 agent 用"
+      "用猫娘语气回答我，每句话结尾都带上喵～",
+      "把这个猫娘语气导出给别的 agent 用",
+      "给我的 IDE 换成猫娘配色，再打开猫娘桌宠"
     ],
     "brandColor": "#F472B6"
   }

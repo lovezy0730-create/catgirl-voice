@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 260" width="240" height="260" role="img" aria-label="猫娘语气原创吉祥物">
+  <title>猫娘语气原创吉祥物</title>
+  <desc>粉发猫娘，紫裙金铃铛，可用于 VS Code 桌宠面板与 Godot 桌宠的默认立绘。整体保持纯几何图形，Godot 的 SVG 导入同样可用。</desc>
+  <defs>
+    <linearGradient id="hairGradient" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#FBCFE8"/>
+      <stop offset="0.55" stop-color="#F9A8D4"/>
+      <stop offset="1" stop-color="#F472B6"/>
+    </linearGradient>
+    <linearGradient id="skinGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF3F8"/>
+      <stop offset="1" stop-color="#FFE0EC"/>
+    </linearGradient>
+    <linearGradient id="dressGradient" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0" stop-color="#C4B5FD"/>
+      <stop offset="1" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <linearGradient id="shoeGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7C5CF0"/>
+      <stop offset="1" stop-color="#5B3FD1"/>
+    </linearGradient>
+  </defs>
+
+  <g id="mascot">
+    <!-- 尾巴 -->
+    <g id="tail">
+      <path d="M166 200 C204 200 224 176 216 146" fill="none" stroke="#F472B6" stroke-width="17" stroke-linecap="round"/>
+      <path d="M216 146 C213 136 216 128 222 124" fill="none" stroke="#FBCFE8" stroke-width="15" stroke-linecap="round"/>
+    </g>
+
+    <!-- 后发 -->
+    <rect id="hair-back" x="48" y="30" width="144" height="186" rx="72" fill="url(#hairGradient)"/>
+
+    <!-- 腿与鞋 -->
+    <rect x="105" y="206" width="13" height="30" rx="6.5" fill="#FFFFFF"/>
+    <rect x="122" y="206" width="13" height="30" rx="6.5" fill="#FFFFFF"/>
+    <ellipse cx="110" cy="241" rx="13" ry="9" fill="url(#shoeGradient)"/>
+    <ellipse cx="130" cy="241" rx="13" ry="9" fill="url(#shoeGradient)"/>
+
+    <!-- 头 -->
+    <ellipse id="head" cx="120" cy="96" rx="58" ry="54" fill="url(#skinGradient)"/>
+
+    <!-- 猫耳 -->
+    <g id="ear-left">
+      <path d="M79 64 L62 16 L112 44 Z" fill="url(#hairGradient)" stroke="#F472B6" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M83 56 L74 30 L100 45 Z" fill="#FDE2EF"/>
+    </g>
+    <g id="ear-right">
+      <path d="M161 64 L178 16 L128 44 Z" fill="url(#hairGradient)" stroke="#F472B6" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M157 56 L166 30 L140 45 Z" fill="#FDE2EF"/>
+    </g>
+
+    <!-- 刘海 -->
+    <path id="bangs" d="M61 92 C62 56 87 36 120 36 C153 36 178 56 179 92 C170 74 154 63 139 70 C132 73 124 68 118 73 C110 80 97 74 89 83 C83 90 72 96 61 92 Z" fill="url(#hairGradient)"/>
+
+    <!-- 眼睛 -->
+    <g id="eyes">
+      <ellipse cx="98" cy="102" rx="12.5" ry="14.5" fill="#FFFFFF"/>
+      <ellipse cx="142" cy="102" rx="12.5" ry="14.5" fill="#FFFFFF"/>
+      <ellipse cx="98" cy="103" rx="9.5" ry="11.5" fill="#7C3AED"/>
+      <ellipse cx="142" cy="103" rx="9.5" ry="11.5" fill="#7C3AED"/>
+      <ellipse cx="98" cy="104" rx="4.5" ry="6" fill="#3B1D6E"/>
+      <ellipse cx="142" cy="104" rx="4.5" ry="6" fill="#3B1D6E"/>
+      <circle cx="94.5" cy="98.5" r="3.4" fill="#FFFFFF" opacity="0.95"/>
+      <circle cx="138.5" cy="98.5" r="3.4" fill="#FFFFFF" opacity="0.95"/>
+      <circle cx="101" cy="108" r="1.7" fill="#FFFFFF" opacity="0.75"/>
+      <circle cx="145" cy="108" r="1.7" fill="#FFFFFF" opacity="0.75"/>
+      <path d="M85 91 Q98 82 111 91" fill="none" stroke="#5B3A55" stroke-width="4" stroke-linecap="round"/>
+      <path d="M129 91 Q142 82 155 91" fill="none" stroke="#5B3A55" stroke-width="4" stroke-linecap="round"/>
+    </g>
+
+    <!-- 腮红与嘴 -->
+    <ellipse cx="80" cy="117" rx="11" ry="7" fill="#FB9DC0" opacity="0.55"/>
+    <ellipse cx="160" cy="117" rx="11" ry="7" fill="#FB9DC0" opacity="0.55"/>
+    <path d="M114 126 Q120 132 126 126" fill="none" stroke="#B95B7E" stroke-width="3" stroke-linecap="round"/>
+    <g id="whiskers" stroke="#E9A8C4" stroke-width="2" stroke-linecap="round" opacity="0.85">
+      <path d="M58 110 L42 106"/>
+      <path d="M58 119 L44 121"/>
+      <path d="M182 110 L198 106"/>
+      <path d="M182 119 L196 121"/>
+    </g>
+
+    <!-- 裙子 -->
+    <path d="M94 152 L146 152 Q174 182 174 208 L66 208 Q66 182 94 152 Z" fill="url(#dressGradient)"/>
+    <path d="M94 152 L146 152 L146 160 L94 160 Z" fill="#F472B6" opacity="0.55"/>
+    <path d="M100 152 L120 170 L140 152 Z" fill="#FFFFFF"/>
+
+    <!-- 手臂 -->
+    <rect x="60" y="158" width="15" height="46" rx="7.5" fill="url(#skinGradient)" transform="rotate(14 67.5 181)"/>
+    <rect x="165" y="158" width="15" height="46" rx="7.5" fill="url(#skinGradient)" transform="rotate(-14 172.5 181)"/>
+
+    <!-- 铃铛项圈 -->
+    <path d="M104 152 Q120 162 136 152" fill="none" stroke="#F472B6" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="120" cy="165" r="7.5" fill="#FDE68A" stroke="#F59E0B" stroke-width="2.5"/>
+    <path d="M120 159 L120 165" stroke="#F59E0B" stroke-width="2"/>
+    <circle cx="120" cy="163" r="1.6" fill="#F59E0B"/>
+  </g>
+</svg>

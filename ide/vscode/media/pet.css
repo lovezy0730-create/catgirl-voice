@@ -1,0 +1,161 @@
+:root {
+  --cat-pink: #f472b6;
+  --cat-pink-soft: #f9a8d4;
+  --cat-purple: #a78bfa;
+  --cat-ink: #4a3b4f;
+  --cat-cream: #fff3f8;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 12%, rgba(244, 114, 182, 0.16), transparent 62%), var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground, var(--cat-ink));
+  font-family: var(--vscode-font-family, "Segoe UI", system-ui, sans-serif);
+  overflow: hidden;
+  user-select: none;
+}
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px;
+}
+
+.bubble {
+  position: relative;
+  max-width: 22rem;
+  padding: 10px 16px;
+  border-radius: 16px;
+  border: 2px solid var(--cat-pink);
+  background: var(--vscode-editorWidget-background, #fff);
+  color: var(--vscode-editorWidget-foreground, var(--cat-ink));
+  font-size: 1.05em;
+  line-height: 1.5;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(244, 114, 182, 0.22);
+  animation: bubble-pop 0.28s ease-out;
+}
+
+.bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  width: 14px;
+  height: 14px;
+  transform: translateX(-50%) rotate(45deg);
+  border-right: 2px solid var(--cat-pink);
+  border-bottom: 2px solid var(--cat-pink);
+  background: var(--vscode-editorWidget-background, #fff);
+}
+
+.pet {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pet:focus-visible {
+  outline: 2px solid var(--cat-pink);
+  outline-offset: 6px;
+  border-radius: 24px;
+}
+
+.pet-figure {
+  display: block;
+  width: calc(240px * var(--pet-scale));
+  transform-origin: 50% 92%;
+  filter: drop-shadow(0 12px 16px rgba(244, 114, 182, 0.28));
+  animation: pet-bob 3.6s ease-in-out infinite;
+}
+
+.pet-figure img,
+svg.mascot {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pet.happy .pet-figure {
+  animation: pet-hop 0.6s ease-out, pet-bob 3.6s ease-in-out 0.6s infinite;
+}
+
+#tail {
+  transform-box: fill-box;
+  transform-origin: 8% 92%;
+  animation: tail-sway 3.2s ease-in-out infinite;
+}
+
+#ear-left,
+#ear-right {
+  transform-box: fill-box;
+  animation: ear-twitch 6.4s ease-in-out infinite;
+}
+
+#ear-right {
+  animation-delay: 0.4s;
+}
+
+#eyes {
+  transform-box: fill-box;
+  transform-origin: 50% 55%;
+  animation: blink 5.6s ease-in-out infinite;
+}
+
+.hint {
+  margin: 4px 0 0;
+  font-size: 0.82em;
+  opacity: 0.72;
+}
+
+@keyframes pet-bob {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50% { transform: translateY(-8px) scaleY(0.995); }
+}
+
+@keyframes pet-hop {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(-22px) rotate(-3deg); }
+  70% { transform: translateY(0) rotate(2deg); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.08); }
+}
+
+@keyframes ear-twitch {
+  0%, 88%, 100% { transform: rotate(0deg); }
+  91% { transform: rotate(-7deg); }
+  94% { transform: rotate(4deg); }
+}
+
+@keyframes tail-sway {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(9deg); }
+}
+
+@keyframes bubble-pop {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pet-figure,
+  #tail,
+  #ear-left,
+  #ear-right,
+  #eyes,
+  .bubble {
+    animation: none;
+  }
+}
