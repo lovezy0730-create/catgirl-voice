@@ -45,6 +45,17 @@ const BALANCE_REFRESH_SECONDS := 600.0
 const MEMO_PATH := "res://userdata/todo.md"
 const MEMO_TEMPLATE := "# 待办备忘录\n\n- [ ] 今天要做的事\n"
 
+## 任务栏图标：从立绘里裁一块头部特写，比例按角色画布量出来的。
+const HEAD_CENTER_X_RATIO := 0.434
+const ICON_SIDE_RATIO := 0.52
+
+const TODO_PANEL_SCRIPT := preload("res://todo_panel.gd")
+
+const PINK := Color("f472b6")
+const PINK_SOFT := Color("f9a8d4")
+const PINK_PALE := Color("fff3f8")
+const INK := Color("4a3b4f")
+
 @onready var drag_collision: CollisionShape2D = $CharacterRoot/DragArea/CollisionShape2D
 @onready var body: Sprite2D = $CharacterRoot/VisualRoot/Body
 @onready var bubble: PanelContainer = $Bubble
@@ -64,6 +75,8 @@ var _balance_request: HTTPRequest
 var _balance_timer: Timer
 var _balance_text := ""
 var _balance_updated_at := 0.0
+var _drag_rect := Rect2()
+var _todo_panel: PanelContainer
 
 
 func _ready() -> void:
@@ -73,19 +86,75 @@ func _ready() -> void:
 		return
 	var centre := drag_collision.global_position
 	var half_size := rectangle.size / 2.0
-	DisplayServer.window_set_mouse_passthrough(PackedVector2Array([
-		centre + Vector2(-half_size.x, -half_size.y),
-		centre + Vector2(half_size.x, -half_size.y),
-		centre + Vector2(half_size.x, half_size.y),
-		centre + Vector2(-half_size.x, half_size.y),
-	]))
+	_drag_rect = Rect2(centre - half_size, rectangle.size)
+	_update_passthrough()
 	bubble.visible = false
 	menu_panel.visible = false
+	_style_menu()
 	if animation_player.has_animation("idle_breathe"):
 		animation_player.play("idle_breathe")
 	apply_character_art()
 	_schedule_next_speech()
 	_start_balance_watch()
+
+
+## 鼠标穿透区域：平时只放开桌宠本体，菜单或待办面板打开时一起放开，
+## 否则点到面板边缘会被系统当成点桌面。
+func _update_passthrough() -> void:
+	var area := _drag_rect
+	if menu_panel != null and menu_panel.visible:
+		area = area.merge(menu_panel.get_global_rect())
+	if _todo_panel != null and _todo_panel.visible:
+		area = area.merge(_todo_panel.get_global_rect())
+	var position := area.position
+	var size := area.size
+	DisplayServer.window_set_mouse_passthrough(PackedVector2Array([
+		position,
+		position + Vector2(size.x, 0.0),
+		position + size,
+		position + Vector2(0.0, size.y),
+	]))
+
+
+## 右键菜单统一成桌宠的粉色圆角风，字号和文字也一起对齐。
+func _style_menu() -> void:
+	menu_panel.z_index = 10
+	var panel_box := StyleBoxFlat.new()
+	panel_box.bg_color = PINK_PALE
+	panel_box.set_border_width_all(3)
+	panel_box.border_color = PINK
+	panel_box.set_corner_radius_all(18)
+	panel_box.set_content_margin_all(10.0)
+	menu_panel.add_theme_stylebox_override("panel", panel_box)
+	balance_button.text = "看看余额喵～"
+	$MenuPanel/VBox/MemoButton.text = "待办清单喵～"
+	$MenuPanel/VBox/QuitButton.text = "退出桌宠喵～"
+	for button in menu_panel.get_node("VBox").get_children():
+		if button is not Button:
+			continue
+		_style_menu_button(button as Button)
+
+
+func _style_menu_button(button: Button) -> void:
+	button.add_theme_stylebox_override("normal", _button_box(Color("ffffff"), PINK_SOFT))
+	button.add_theme_stylebox_override("hover", _button_box(PINK_SOFT, PINK))
+	button.add_theme_stylebox_override("pressed", _button_box(PINK, PINK))
+	button.add_theme_stylebox_override("focus", _button_box(Color("ffffff"), PINK))
+	button.add_theme_color_override("font_color", INK)
+	button.add_theme_color_override("font_hover_color", INK)
+	button.add_theme_color_override("font_pressed_color", Color("ffffff"))
+	button.add_theme_font_size_override("font_size", 15)
+	button.custom_minimum_size = Vector2(190.0, 34.0)
+
+
+func _button_box(bg: Color, border: Color) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color = bg
+	box.set_border_width_all(2)
+	box.border_color = border
+	box.set_corner_radius_all(12)
+	box.set_content_margin_all(8.0)
+	return box
 
 
 func _on_drag_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
@@ -169,10 +238,12 @@ func _show_menu() -> void:
 		clampf(mouse.y, 8.0, maxf(8.0, window_size.y - size.y - 8.0))
 	)
 	menu_panel.visible = true
+	_update_passthrough()
 
 
 func _hide_menu() -> void:
 	menu_panel.visible = false
+	_update_passthrough()
 
 
 func _point_in_menu(point: Vector2) -> bool:
@@ -250,7 +321,7 @@ func _on_balance_completed(result: int, response_code: int, _headers: PackedStri
 	else:
 		_balance_text = "%s %s" % [currency, amount]
 	_balance_updated_at = Time.get_ticks_msec() / 1000.0
-	balance_button.text = "查看 DeepSeek 余额（%s）" % _balance_text
+	balance_button.text = "看看余额喵～（%s）" % _balance_text
 	print("[猫娘桌宠] DeepSeek 余额：%s" % _balance_text)
 	say("DeepSeek 余额：%s 喵～" % _balance_text)
 
@@ -294,15 +365,22 @@ func _deepseek_token() -> String:
 
 func _on_memo_button_pressed() -> void:
 	_hide_menu()
-	var absolute := ensure_memo_file()
-	if absolute == "":
-		say("备忘录文件建不出来，看看 userdata 目录权限喵～")
-		return
-	var error := OS.shell_open(absolute)
-	if error != OK:
-		say("打不开备忘录（错误 %d），文件在 %s 喵～" % [error, absolute])
-	else:
-		say("备忘录已经打开啦，随手记待办喵～")
+	_open_todo_panel()
+
+
+## 打开带日历的待办面板：点小方块就能把待办划掉。
+func _open_todo_panel() -> void:
+	_hide_menu()
+	if _todo_panel == null:
+		_todo_panel = TODO_PANEL_SCRIPT.new()
+		_todo_panel.name = "TodoPanel"
+		_todo_panel.position = Vector2(30.0, 40.0)
+		_todo_panel.closed.connect(_update_passthrough)
+		add_child(_todo_panel)
+	if not _todo_panel.visible:
+		_todo_panel.open()
+	_update_passthrough()
+	say("待办清单打开啦，点小方块就能划掉喵～")
 
 
 ## 确保 userdata/todo.md 存在并返回绝对路径，不存在就写入一份模板。
@@ -338,7 +416,26 @@ func apply_character_art() -> void:
 	if height > 0.0:
 		body.scale = Vector2.ONE * (TARGET_SPRITE_HEIGHT / height)
 	print("[猫娘桌宠] 使用角色立绘 %s（%dx%d，缩放 %.3f）" % [base_path, texture.get_width(), texture.get_height(), body.scale.x])
+	_apply_window_icon(texture)
 	_setup_eyes()
+
+
+## 任务栏图标换成角色头部特写，让桌宠图标也是这位角色。
+func _apply_window_icon(texture: Texture2D) -> void:
+	var image := texture.get_image()
+	if image == null or image.get_width() <= 0:
+		return
+	var side := int(minf(float(image.get_width()), float(image.get_height())) * ICON_SIDE_RATIO)
+	if side <= 0:
+		return
+	var x := clampi(int(float(image.get_width()) * HEAD_CENTER_X_RATIO) - side / 2, 0, image.get_width() - side)
+	var region := image.get_region(Rect2i(x, 0, side, side))
+	# Window 上没有 set_icon，任务栏图标走 DisplayServer。
+	if DisplayServer.has_method("set_icon"):
+		DisplayServer.set_icon(region)
+	else:
+		push_warning("当前引擎不支持设置窗口图标，保留默认图标")
+	print("[猫娘桌宠] 任务栏图标已换成角色头部特写（%dx%d）" % [side, side])
 
 
 ## 读取立绘：先走 Godot 资源系统；没有导入缓存时直接用 Image 读文件，
