@@ -30,7 +30,7 @@ var _input: LineEdit
 
 func _ready() -> void:
 	z_index = 10
-	custom_minimum_size = Vector2(420.0, 520.0)
+	custom_minimum_size = Vector2(560.0, 690.0)
 	add_theme_stylebox_override("panel", _panel_box())
 	_build()
 	_load()
@@ -104,7 +104,7 @@ func _box(bg: Color, border: Color, radius: int, border_width: int = 3) -> Style
 	box.set_border_width_all(border_width)
 	box.border_color = border
 	box.set_corner_radius_all(radius)
-	box.set_content_margin_all(8.0)
+	box.set_content_margin_all(10.0)
 	return box
 
 
@@ -121,12 +121,12 @@ func _style_button(button: Button, compact: bool = false) -> void:
 	button.add_theme_stylebox_override("pressed", _box(PINK, PINK_BORDER, radius, 2))
 	button.add_theme_stylebox_override("focus", _box(Color("ffffff"), PINK, radius, 2))
 	var normal := _box(Color("ffffff"), PINK_BORDER, radius, 2)
-	normal.set_content_margin_all(4.0 if compact else 8.0)
+	normal.set_content_margin_all(6.0 if compact else 10.0)
 	button.add_theme_stylebox_override("normal", normal)
 	button.add_theme_color_override("font_color", INK)
 	button.add_theme_color_override("font_hover_color", INK)
 	button.add_theme_color_override("font_pressed_color", Color("ffffff"))
-	button.add_theme_font_size_override("font_size", 13 if compact else 15)
+	button.add_theme_font_size_override("font_size", 16 if compact else 18)
 
 
 func _day_style(button: Button, selected: bool, today: bool, has_todo: bool) -> void:
@@ -146,7 +146,7 @@ func _day_style(button: Button, selected: bool, today: bool, has_todo: bool) -> 
 	button.add_theme_color_override("font_color", Color("ffffff") if selected else INK)
 	button.add_theme_color_override("font_hover_color", INK)
 	button.add_theme_color_override("font_pressed_color", Color("ffffff"))
-	button.add_theme_font_size_override("font_size", 13)
+	button.add_theme_font_size_override("font_size", 16)
 
 
 # ---------------------------------------------------------------- 搭界面
@@ -170,7 +170,7 @@ func _build() -> void:
 	_month_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_month_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_month_label.add_theme_color_override("font_color", PINK)
-	_month_label.add_theme_font_size_override("font_size", 16)
+	_month_label.add_theme_font_size_override("font_size", 20)
 	header.add_child(_month_label)
 
 	var next := Button.new()
@@ -193,31 +193,31 @@ func _build() -> void:
 
 	var weekdays := GridContainer.new()
 	weekdays.columns = 7
-	weekdays.add_theme_constant_override("h_separation", 4)
-	weekdays.add_theme_constant_override("v_separation", 2)
+	weekdays.add_theme_constant_override("h_separation", 5)
+	weekdays.add_theme_constant_override("v_separation", 4)
 	root.add_child(weekdays)
 	for name in WEEKDAYS:
 		var label := Label.new()
 		label.text = name
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.custom_minimum_size = Vector2(46.0, 0.0)
+		label.custom_minimum_size = Vector2(58.0, 0.0)
 		label.add_theme_color_override("font_color", MUTED)
-		label.add_theme_font_size_override("font_size", 12)
+		label.add_theme_font_size_override("font_size", 15)
 		weekdays.add_child(label)
 
 	_calendar = GridContainer.new()
 	_calendar.columns = 7
-	_calendar.add_theme_constant_override("h_separation", 4)
-	_calendar.add_theme_constant_override("v_separation", 4)
+	_calendar.add_theme_constant_override("h_separation", 5)
+	_calendar.add_theme_constant_override("v_separation", 6)
 	root.add_child(_calendar)
 
 	_selected_label = Label.new()
 	_selected_label.add_theme_color_override("font_color", PINK)
-	_selected_label.add_theme_font_size_override("font_size", 14)
+	_selected_label.add_theme_font_size_override("font_size", 17)
 	root.add_child(_selected_label)
 
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0.0, 150.0)
+	scroll.custom_minimum_size = Vector2(0.0, 190.0)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(scroll)
@@ -238,7 +238,7 @@ func _build() -> void:
 	_input.add_theme_stylebox_override("focus", _box(Color("ffffff"), PINK, 10, 2))
 	_input.add_theme_color_override("font_color", INK)
 	_input.add_theme_color_override("font_placeholder_color", MUTED)
-	_input.add_theme_font_size_override("font_size", 14)
+	_input.add_theme_font_size_override("font_size", 17)
 	_input.text_submitted.connect(func(_text: String) -> void: _submit_input())
 	add_row.add_child(_input)
 
@@ -366,12 +366,12 @@ func _render_calendar() -> void:
 		var day := index - offset + 1
 		if day < 1 or day > days:
 			var spacer := Control.new()
-			spacer.custom_minimum_size = Vector2(46.0, 32.0)
+			spacer.custom_minimum_size = Vector2(58.0, 42.0)
 			_calendar.add_child(spacer)
 			continue
 		var date := _date_string(day)
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(46.0, 32.0)
+		button.custom_minimum_size = Vector2(58.0, 42.0)
 		var pending := pending_count(date)
 		button.text = "%d" % day if pending == 0 else "%d ·" % day
 		button.tooltip_text = "待办 %d 条，未完成 %d 条" % [todo_count(date), pending]
@@ -399,7 +399,7 @@ func _render_list() -> void:
 		var empty := Label.new()
 		empty.text = "这一天还没有待办，下面加一条喵～"
 		empty.add_theme_color_override("font_color", MUTED)
-		empty.add_theme_font_size_override("font_size", 13)
+		empty.add_theme_font_size_override("font_size", 16)
 		_list_box.add_child(empty)
 		return
 	for index in list.size():
@@ -412,7 +412,7 @@ func _render_list() -> void:
 		check.text = str(item.get("text", ""))
 		check.button_pressed = bool(item.get("done", false))
 		check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		check.add_theme_font_size_override("font_size", 14)
+		check.add_theme_font_size_override("font_size", 17)
 		check.add_theme_color_override("font_color", MUTED if check.button_pressed else INK)
 		check.add_theme_color_override("font_hover_color", PINK)
 		check.toggled.connect(func(_pressed: bool) -> void: toggle_todo(_selected, index))

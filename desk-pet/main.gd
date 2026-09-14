@@ -29,7 +29,7 @@ const EYES_HALF_FILE := "eyes_half.png"
 const EYES_CLOSED_FILE := "eyes_closed.png"
 
 ## 立绘缩放到的像素高度，按 480x600 的窗口留出气泡空间。
-const TARGET_SPRITE_HEIGHT := 420.0
+const TARGET_SPRITE_HEIGHT := 560.0
 
 const BUBBLE_HOLD_SECONDS := 3.5
 const BLINK_HALF_SECONDS := 0.06
@@ -143,8 +143,8 @@ func _style_menu_button(button: Button) -> void:
 	button.add_theme_color_override("font_color", INK)
 	button.add_theme_color_override("font_hover_color", INK)
 	button.add_theme_color_override("font_pressed_color", Color("ffffff"))
-	button.add_theme_font_size_override("font_size", 15)
-	button.custom_minimum_size = Vector2(190.0, 34.0)
+	button.add_theme_font_size_override("font_size", 18)
+	button.custom_minimum_size = Vector2(230.0, 44.0)
 
 
 func _button_box(bg: Color, border: Color) -> StyleBoxFlat:
@@ -374,11 +374,17 @@ func _open_todo_panel() -> void:
 	if _todo_panel == null:
 		_todo_panel = TODO_PANEL_SCRIPT.new()
 		_todo_panel.name = "TodoPanel"
-		_todo_panel.position = Vector2(30.0, 40.0)
 		_todo_panel.closed.connect(_update_passthrough)
 		add_child(_todo_panel)
 	if not _todo_panel.visible:
 		_todo_panel.open()
+	# 面板在窗口里居中，窗口多大都摆得正。
+	var viewport_size := get_viewport_rect().size
+	var panel_size := _todo_panel.get_combined_minimum_size()
+	var panel_position := ((viewport_size - panel_size) / 2.0).floor()
+	panel_position.x = clampf(panel_position.x, 8.0, maxf(8.0, viewport_size.x - panel_size.x - 8.0))
+	panel_position.y = clampf(panel_position.y, 8.0, maxf(8.0, viewport_size.y - panel_size.y - 8.0))
+	_todo_panel.position = panel_position
 	_update_passthrough()
 	say("待办清单打开啦，点小方块就能划掉喵～")
 
