@@ -1,6 +1,6 @@
 extends Node2D
 
-## 猫娘桌宠：左键拖动窗口，双击让猫娘说话，右键退出。
+## 猫娘桌宠：左键拖动窗口、左键双击说话、右键打开菜单。
 ##
 ## 立绘默认用工程自带的 res://character/catgirl_default/mascot.svg。
 ## 只要把下面的文件放进 CHARACTER_DIR 指向的角色目录，就会自动改用它们：
@@ -28,12 +28,22 @@ const BASE_FILE := "base.png"
 const EYES_HALF_FILE := "eyes_half.png"
 const EYES_CLOSED_FILE := "eyes_closed.png"
 
-## 立绘缩放到的像素高度，按 360x400 的窗口留出气泡空间。
-const TARGET_SPRITE_HEIGHT := 236.0
+## 立绘缩放到的像素高度，按 480x600 的窗口留出气泡空间。
+const TARGET_SPRITE_HEIGHT := 420.0
 
 const BUBBLE_HOLD_SECONDS := 3.5
 const BLINK_HALF_SECONDS := 0.06
 const BLINK_CLOSED_SECONDS := 0.09
+
+## DeepSeek 余额：优先读环境变量，其次读 Codex 的 config.toml，避免把 Key 写进工程。
+const DEEPSEEK_BALANCE_URL := "https://api.deepseek.com/user/balance"
+const DEEPSEEK_KEY_ENV := "DEEPSEEK_API_KEY"
+const CODEX_CONFIG_RELATIVE := "/.codex/config.toml"
+const BALANCE_REFRESH_SECONDS := 600.0
+
+## 待办备忘录文件，放在 userdata/ 里，不参与版本控制。
+const MEMO_PATH := "res://userdata/todo.md"
+const MEMO_TEMPLATE := "# 待办备忘录\n\n- [ ] 今天要做的事\n"
 
 @onready var drag_collision: CollisionShape2D = $CharacterRoot/DragArea/CollisionShape2D
 @onready var body: Sprite2D = $CharacterRoot/VisualRoot/Body
@@ -41,6 +51,8 @@ const BLINK_CLOSED_SECONDS := 0.09
 @onready var bubble_label: Label = $Bubble/Label
 @onready var bubble_timer: Timer = $BubbleTimer
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
+@onready var menu_panel: PanelContainer = $MenuPanel
+@onready var balance_button: Button = $MenuPanel/VBox/BalanceButton
 
 var _speaking := false
 var _blinking := false
@@ -48,6 +60,10 @@ var _eyes: Sprite2D
 var _eyes_half: Texture2D
 var _eyes_closed: Texture2D
 var _blink_timer: Timer
+var _balance_request: HTTPRequest
+var _balance_timer: Timer
+var _balance_text := ""
+var _balance_updated_at := 0.0
 
 
 func _ready() -> void:
@@ -64,23 +80,37 @@ func _ready() -> void:
 		centre + Vector2(-half_size.x, half_size.y),
 	]))
 	bubble.visible = false
+	menu_panel.visible = false
 	if animation_player.has_animation("idle_breathe"):
 		animation_player.play("idle_breathe")
 	apply_character_art()
 	_schedule_next_speech()
+	_start_balance_watch()
 
 
 func _on_drag_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is not InputEventMouseButton:
 		return
-	if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-		get_tree().quit()
-	elif event.button_index == MOUSE_BUTTON_LEFT:
-		if event.double_click:
-			speak()
-		elif event.pressed:
-			DisplayServer.window_start_drag()
+	if event.button_index == MOUSE_BUTTON_RIGHT:
+		if event.pressed:
+			_toggle_menu()
+		return
+	if event.button_index != MOUSE_BUTTON_LEFT:
+		return
+	var point := get_viewport().get_mouse_position()
+	if _point_in_menu(point):
+		# 点在菜单上：交给按钮处理，这里什么都不做。
+		return
+	if menu_panel.visible:
+		_hide_menu()
+		return
+	if event.double_click:
+		speak()
+	elif event.pressed:
+		DisplayServer.window_start_drag()
 
+
+# ---------------------------------------------------------------- 台词与气泡
 
 func _schedule_next_speech() -> void:
 	bubble_timer.wait_time = randf_range(7.0, 15.0)
@@ -94,10 +124,16 @@ func _on_bubble_timer_timeout() -> void:
 
 ## 显示一句随机台词，并在一段时间后淡出。
 func speak() -> void:
+	say(SPEECH_LINES[randi() % SPEECH_LINES.size()])
+
+
+## 显示指定台词，并在一段时间后淡出。
+func say(line: String) -> void:
 	if _speaking:
+		bubble_label.text = line
 		return
 	_speaking = true
-	bubble_label.text = SPEECH_LINES[randi() % SPEECH_LINES.size()]
+	bubble_label.text = line
 	bubble.modulate.a = 0.0
 	bubble.visible = true
 
@@ -113,6 +149,182 @@ func speak() -> void:
 	bubble.modulate.a = 1.0
 	_speaking = false
 
+
+# ---------------------------------------------------------------- 右键菜单
+
+func _toggle_menu() -> void:
+	if menu_panel.visible:
+		_hide_menu()
+	else:
+		_show_menu()
+
+
+func _show_menu() -> void:
+	menu_panel.reset_size()
+	var size := menu_panel.get_combined_minimum_size()
+	var window_size := Vector2(get_window().size)
+	var mouse := get_viewport().get_mouse_position()
+	menu_panel.position = Vector2(
+		clampf(mouse.x, 8.0, maxf(8.0, window_size.x - size.x - 8.0)),
+		clampf(mouse.y, 8.0, maxf(8.0, window_size.y - size.y - 8.0))
+	)
+	menu_panel.visible = true
+
+
+func _hide_menu() -> void:
+	menu_panel.visible = false
+
+
+func _point_in_menu(point: Vector2) -> bool:
+	return menu_panel.visible and menu_panel.get_global_rect().has_point(point)
+
+
+func _on_quit_button_pressed() -> void:
+	get_tree().quit()
+
+
+# ---------------------------------------------------------------- DeepSeek 余额
+
+func _on_balance_button_pressed() -> void:
+	_hide_menu()
+	refresh_balance(false)
+
+
+## 启动时先静默查一次，之后每 10 分钟刷新一次，菜单项会带上当前余额。
+func _start_balance_watch() -> void:
+	if _deepseek_token() == "":
+		print("[猫娘桌宠] 没有找到 DeepSeek API Key，余额功能待命中")
+		return
+	refresh_balance(true)
+	_balance_timer = Timer.new()
+	_balance_timer.name = "BalanceTimer"
+	_balance_timer.wait_time = BALANCE_REFRESH_SECONDS
+	_balance_timer.timeout.connect(func() -> void: refresh_balance(true))
+	add_child(_balance_timer)
+	_balance_timer.start()
+
+
+func refresh_balance(silent: bool) -> void:
+	var token := _deepseek_token()
+	if token == "":
+		if not silent:
+			say("没有找到 DeepSeek API Key，先设好环境变量再试喵～")
+		return
+	if _balance_request == null:
+		_balance_request = HTTPRequest.new()
+		_balance_request.name = "BalanceRequest"
+		_balance_request.timeout = 15.0
+		_balance_request.request_completed.connect(_on_balance_completed)
+		add_child(_balance_request)
+	var headers := PackedStringArray([
+		"Authorization: Bearer %s" % token,
+		"Accept: application/json",
+	])
+	var error := _balance_request.request(DEEPSEEK_BALANCE_URL, headers, HTTPClient.METHOD_GET)
+	if error != OK:
+		push_warning("余额请求发起失败：%d" % error)
+		if not silent:
+			say("余额查询没能发出去喵～")
+
+
+func _on_balance_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	if result != HTTPRequest.RESULT_SUCCESS:
+		say("余额查询失败（网络错误 %d）喵～" % result)
+		return
+	if response_code != 200:
+		say("余额查询失败（HTTP %d），检查一下 Key 喵～" % response_code)
+		return
+	var parsed: Variant = JSON.parse_string(body.get_string_from_utf8())
+	if typeof(parsed) != TYPE_DICTIONARY:
+		say("余额返回的内容看不懂喵～")
+		return
+	var infos: Variant = (parsed as Dictionary).get("balance_infos")
+	if typeof(infos) != TYPE_ARRAY or (infos as Array).is_empty():
+		say("账户里没有余额信息喵～")
+		return
+	var info: Dictionary = (infos as Array)[0]
+	var currency := str(info.get("currency", "CNY"))
+	var amount := str(info.get("total_balance", "?"))
+	if currency == "CNY":
+		_balance_text = "¥%s" % amount
+	else:
+		_balance_text = "%s %s" % [currency, amount]
+	_balance_updated_at = Time.get_ticks_msec() / 1000.0
+	balance_button.text = "查看 DeepSeek 余额（%s）" % _balance_text
+	print("[猫娘桌宠] DeepSeek 余额：%s" % _balance_text)
+	say("DeepSeek 余额：%s 喵～" % _balance_text)
+
+
+## 找 Key：环境变量优先，其次从 Codex 的 config.toml 里读，避免把密钥复制进工程。
+func _deepseek_token() -> String:
+	var from_env := OS.get_environment(DEEPSEEK_KEY_ENV)
+	if from_env != "":
+		return from_env
+	var home := OS.get_environment("USERPROFILE")
+	if home == "":
+		home = OS.get_environment("HOME")
+	if home == "":
+		return ""
+	var config_path := home + CODEX_CONFIG_RELATIVE
+	if not FileAccess.file_exists(config_path):
+		return ""
+	var file := FileAccess.open(config_path, FileAccess.READ)
+	if file == null:
+		return ""
+	var in_deepseek_section := false
+	while not file.eof_reached():
+		var line := file.get_line().strip_edges()
+		if line.begins_with("["):
+			in_deepseek_section = line.contains("deepseek")
+			continue
+		if not in_deepseek_section or not line.begins_with("experimental_bearer_token"):
+			continue
+		var parts := line.split("=", true, 1)
+		if parts.size() < 2:
+			continue
+		var token := parts[1].strip_edges().trim_prefix("\"").trim_suffix("\"")
+		if token != "":
+			file.close()
+			return token
+	file.close()
+	return ""
+
+
+# ---------------------------------------------------------------- 待办备忘录
+
+func _on_memo_button_pressed() -> void:
+	_hide_menu()
+	var absolute := ensure_memo_file()
+	if absolute == "":
+		say("备忘录文件建不出来，看看 userdata 目录权限喵～")
+		return
+	var error := OS.shell_open(absolute)
+	if error != OK:
+		say("打不开备忘录（错误 %d），文件在 %s 喵～" % [error, absolute])
+	else:
+		say("备忘录已经打开啦，随手记待办喵～")
+
+
+## 确保 userdata/todo.md 存在并返回绝对路径，不存在就写入一份模板。
+func ensure_memo_file() -> String:
+	var absolute := ProjectSettings.globalize_path(MEMO_PATH)
+	var directory := absolute.get_base_dir()
+	if not DirAccess.dir_exists_absolute(directory):
+		var make_error := DirAccess.make_dir_recursive_absolute(directory)
+		if make_error != OK:
+			push_warning("创建 userdata 目录失败：%d" % make_error)
+			return ""
+	if not FileAccess.file_exists(absolute):
+		var file := FileAccess.open(absolute, FileAccess.WRITE)
+		if file == null:
+			push_warning("写入备忘录失败：%s" % absolute)
+			return ""
+		file.store_string(MEMO_TEMPLATE)
+		file.close()
+	return absolute
+
+
+# ---------------------------------------------------------------- 立绘与眨眼
 
 ## 角色目录里有 base.png 时换成它，并按高度自适应缩放；没有就保留场景自带的立绘。
 func apply_character_art() -> void:

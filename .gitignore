@@ -4,6 +4,9 @@ Thumbs.db
 node_modules/
 .godot/
 
+# 桌宠本地数据：待办备忘录等
+desk-pet/userdata/
+
 # 角色立绘：内置原创立绘保留，其余角色目录当作本地素材，不进公开仓库。
 desk-pet/character/*/
 !desk-pet/character/catgirl_default/
