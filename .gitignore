@@ -3,3 +3,8 @@ Thumbs.db
 *.log
 node_modules/
 .godot/
+
+# 角色立绘：内置原创立绘保留，其余角色目录当作本地素材，不进公开仓库。
+desk-pet/character/*/
+!desk-pet/character/catgirl_default/
+!desk-pet/character/catgirl_default/**

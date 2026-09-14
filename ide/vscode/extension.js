@@ -83,6 +83,10 @@ function openPetPanel(context) {
 
   const settings = configuration()
   const spritePath = (settings.get('pet.spritePath', '') || '').trim()
+  const localResourceRoots = [vscode.Uri.joinPath(context.extensionUri, 'media')]
+  if (spritePath && fs.existsSync(spritePath)) {
+    localResourceRoots.push(vscode.Uri.file(path.dirname(spritePath)))
+  }
   const panel = vscode.window.createWebviewPanel(
     'catgirlVoicePet',
     '猫娘桌宠',
@@ -90,7 +94,7 @@ function openPetPanel(context) {
     {
       enableScripts: true,
       retainContextWhenHidden: true,
-      localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')]
+      localResourceRoots
     }
   )
   currentPanel = panel
@@ -109,10 +113,11 @@ function renderPetHtml(webview, extensionUri, settings, spritePath) {
   const scale = clamp(Number(settings.get('pet.scale', 1)) || 1, 0.3, 3)
   const interval = Math.max(2000, Number(settings.get('pet.speechIntervalMs', 9000)) || 9000)
 
-  const customSprite = readCustomSprite(spritePath)
-  const figure = customSprite
-    ? `<img class="pet-image" src="${customSprite}" alt="自定义猫娘立绘">`
-    : inlineMascot()
+  const sprite = readSpriteBundle(webview, spritePath)
+  const figure = sprite ? spriteMarkup(sprite) : inlineMascot()
+  const hint = sprite
+    ? (sprite.half ? '自定义立绘（眨眼叠图已启用）' : '当前使用自定义立绘')
+    : '内置原创立绘'
 
   return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -129,7 +134,7 @@ function renderPetHtml(webview, extensionUri, settings, spritePath) {
     <button class="pet" id="pet" type="button" title="点一下让猫娘说话">
       <span class="pet-figure" id="pet-figure" style="--pet-scale:${scale}">${figure}</span>
     </button>
-    <p class="hint">${customSprite ? '当前使用自定义立绘' : '内置原创立绘'} · 点一下猫娘会说话喵～</p>
+    <p class="hint">${hint} · 点一下猫娘会说话喵～</p>
   </main>
   <script type="application/json" id="catgirl-lines">${escapeForScriptTag(JSON.stringify(lines))}</script>
   <script nonce="${nonce}" src="${scriptUri}"></script>
@@ -137,16 +142,39 @@ function renderPetHtml(webview, extensionUri, settings, spritePath) {
 </html>`
 }
 
-function readCustomSprite(spritePath) {
-  if (!spritePath) return undefined
-  if (!fs.existsSync(spritePath)) return undefined
+function spriteMarkup(sprite) {
+  const base = `<img class="pet-image" src="${sprite.base}" alt="自定义猫娘立绘">`
+  if (!sprite.half || !sprite.closed) return base
+  return `${base}<img class="pet-eyes pet-eyes-half" src="${sprite.half}" alt=""><img class="pet-eyes pet-eyes-closed" src="${sprite.closed}" alt="">`
+}
+
+/**
+ * 读取自定义立绘。除主图外还在同一目录里找 `eyes_half.png` 与 `eyes_closed.png`；
+ * 两张都找到时交给 pet.css 的眨眼动画做叠图，只有主图时保持静态。
+ */
+function readSpriteBundle(webview, spritePath) {
+  if (!spritePath || !fs.existsSync(spritePath)) return undefined
   try {
-    const extension = path.extname(spritePath).toLowerCase()
-    const mime = extension === '.svg' ? 'image/svg+xml' : `image/${extension.replace('.', '') === 'jpg' ? 'jpeg' : extension.replace('.', '')}`
-    return `data:${mime};base64,${fs.readFileSync(spritePath).toString('base64')}`
+    const directory = path.dirname(spritePath)
+    const half = findSibling(directory, 'eyes_half')
+    const closed = findSibling(directory, 'eyes_closed')
+    const both = Boolean(half && closed)
+    return {
+      base: webview.asWebviewUri(vscode.Uri.file(spritePath)).toString(),
+      half: both ? webview.asWebviewUri(vscode.Uri.file(half)).toString() : undefined,
+      closed: both ? webview.asWebviewUri(vscode.Uri.file(closed)).toString() : undefined
+    }
   } catch {
     return undefined
   }
+}
+
+function findSibling(directory, stem) {
+  for (const extension of ['.png', '.webp', '.jpg', '.svg']) {
+    const candidate = path.join(directory, `${stem}${extension}`)
+    if (fs.existsSync(candidate)) return candidate
+  }
+  return undefined
 }
 
 function inlineMascot() {

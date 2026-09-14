@@ -17,14 +17,29 @@ description: "把编辑器换成猫娘风格：安装并应用「猫娘·樱夜�
 把 `ide/vscode` 复制到 VS Code 的扩展目录，重启编辑器即可生效：
 
 ```text
-%USERPROFILE%\.vscode\extensions\lovezy0730-create.catgirl-voice-ide-1.1.0
+%USERPROFILE%\.vscode\extensions\lovezy0730-create.catgirl-voice-ide-<版本>
 ```
+
+注意：只把文件夹复制进扩展目录，VS Code 不会认它，`extensions.json` 里没有条目就会被忽略。正确做法是打成 `.vsix` 再用 `code --install-extension <file>.vsix --force` 安装。
 
 装好后用命令面板执行：
 
 * `猫娘语气：应用猫娘配色`：按 `catgirlVoice.theme.variant` 切到 `猫娘·樱夜`（深色）或 `猫娘·奶咖`（浅色）。
 * `猫娘桌宠：打开面板`：在侧边打开桌宠面板。
 * `猫娘桌宠：选择自定义立绘`：换成自己的图片。
+
+## 换成自己的角色立绘
+
+Godot 桌宠与 VS Code 面板用同一套文件命名：
+
+```text
+<角色目录>/
+├── base.png         主立绘（睁眼），必需
+├── eyes_half.png    半睁眼叠图，可选
+└── eyes_closed.png  闭眼叠图，可选
+```
+
+叠图必须与主立绘同画布、同构图，只在眼睛区域不同，三张齐全时两端都会自动眨眼。
 
 ## 运行 Godot 桌宠
 

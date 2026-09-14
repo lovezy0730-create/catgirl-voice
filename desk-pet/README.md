@@ -35,4 +35,13 @@ icon.svg         工程图标
 
 ## 换角色
 
-见 [character/README.md](character/README.md)：把 `main.tscn` 里 `Body` 节点的纹理换成自己的立绘即可，其余逻辑不用改。
+把角色目录放进 `character/<角色名>/`，再改 `main.gd` 顶部的 `CHARACTER_DIR`，场景不用动：
+
+```text
+character/<角色名>/
+├── base.png         主立绘（睁眼），必需
+├── eyes_half.png    半睁眼叠图，可选
+└── eyes_closed.png  闭眼叠图，可选
+```
+
+三张齐全就自动开启眨眼，只有 `base.png` 就只有呼吸浮动，目录为空则继续用自带的原创立绘。立绘按高度自适应缩放到 236 px，尺寸不限，透明背景即可。叠图必须与主立绘同画布同构图。详细约定见 [character/README.md](character/README.md)。
