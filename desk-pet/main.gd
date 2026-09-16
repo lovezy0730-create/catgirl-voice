@@ -30,8 +30,8 @@ const EYES_CLOSED_FILE := "eyes_closed.png"
 ## 可选：只改耳朵的叠图，放进角色目录就会开启耳朵抖动。
 const EARS_FILE := "ears.png"
 
-## 立绘缩放到的像素高度，按 480x600 的窗口留出气泡空间。
-const TARGET_SPRITE_HEIGHT := 560.0
+## 立绘缩放到的像素高度，按 760x950 的窗口留出气泡空间。
+const TARGET_SPRITE_HEIGHT := 680.0
 
 const BUBBLE_HOLD_SECONDS := 3.5
 const BLINK_HALF_SECONDS := 0.06
@@ -92,6 +92,8 @@ var _balance_updated_at := 0.0
 var _drag_rect := Rect2()
 var _todo_panel: PanelContainer
 var _pomodoro_panel: PanelContainer
+var _dragging := false
+var _drag_offset := Vector2i.ZERO
 
 
 func _ready() -> void:
@@ -195,7 +197,35 @@ func _on_drag_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: i
 		speak()
 		twitch_ears()
 	elif event.pressed:
-		DisplayServer.window_start_drag()
+		_begin_drag()
+
+
+## 无边框透明窗口上系统的 window_start_drag 不一定生效，所以自己按鼠标位置移动窗口。
+func _begin_drag() -> void:
+	_dragging = true
+	_drag_offset = DisplayServer.mouse_get_position() - DisplayServer.window_get_position()
+
+
+func _end_drag() -> void:
+	_dragging = false
+
+
+## 拖动时窗口该待的位置：鼠标屏幕坐标减去按下时的偏移。
+func drag_target_position() -> Vector2i:
+	return DisplayServer.mouse_get_position() - _drag_offset
+
+
+func _process(_delta: float) -> void:
+	if _dragging:
+		DisplayServer.window_set_position(drag_target_position())
+
+
+func _input(event: InputEvent) -> void:
+	if not _dragging:
+		return
+	# 松开左键就结束拖动，鼠标移到窗口外也能收到。
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+		_end_drag()
 
 
 # ---------------------------------------------------------------- 台词与气泡

@@ -48,7 +48,7 @@ var _spins: Dictionary = {}
 
 func _ready() -> void:
 	z_index = 10
-	custom_minimum_size = Vector2(560.0, 620.0)
+	custom_minimum_size = Vector2(620.0, 700.0)
 	add_theme_stylebox_override("panel", _panel_box())
 	_build()
 	_load()

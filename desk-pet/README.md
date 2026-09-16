@@ -23,7 +23,11 @@ godot --path <本目录路径>
 
 鼠标点击会穿透立绘以外的区域，`main.gd` 用拖拽区域的矩形算出 `DisplayServer.window_set_mouse_passthrough` 的命中范围。
 
-窗口是 640x800，立绘按高度自适应缩放到 560 px。想再大一点，改 `main.gd` 里的 `TARGET_SPRITE_HEIGHT`，同时把 `project.godot` 的窗口尺寸和 `main.tscn` 里的拖拽区域一起调大。
+窗口是 760x950，立绘按高度自适应缩放到 680 px。想再大一点，改 `main.gd` 里的 `TARGET_SPRITE_HEIGHT`，同时把 `project.godot` 的窗口尺寸和 `main.tscn` 里的拖拽区域一起调大。
+
+### 拖动
+
+拖动是自己实现的，没有用 `DisplayServer.window_start_drag()`：无边框透明窗口上原生拖动不一定生效。按下左键时记下「鼠标屏幕坐标 − 窗口坐标」的偏移，之后每帧把窗口移到「鼠标屏幕坐标 − 偏移」，松开左键结束，鼠标滑出窗口也能正常收尾。
 
 ## 右键菜单
 

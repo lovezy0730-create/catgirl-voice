@@ -30,7 +30,7 @@ var _input: LineEdit
 
 func _ready() -> void:
 	z_index = 10
-	custom_minimum_size = Vector2(560.0, 690.0)
+	custom_minimum_size = Vector2(620.0, 780.0)
 	add_theme_stylebox_override("panel", _panel_box())
 	_build()
 	_load()
@@ -200,7 +200,7 @@ func _build() -> void:
 		var label := Label.new()
 		label.text = name
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.custom_minimum_size = Vector2(58.0, 0.0)
+		label.custom_minimum_size = Vector2(66.0, 0.0)
 		label.add_theme_color_override("font_color", MUTED)
 		label.add_theme_font_size_override("font_size", 15)
 		weekdays.add_child(label)
@@ -217,7 +217,7 @@ func _build() -> void:
 	root.add_child(_selected_label)
 
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0.0, 190.0)
+	scroll.custom_minimum_size = Vector2(0.0, 240.0)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(scroll)
@@ -366,12 +366,12 @@ func _render_calendar() -> void:
 		var day := index - offset + 1
 		if day < 1 or day > days:
 			var spacer := Control.new()
-			spacer.custom_minimum_size = Vector2(58.0, 42.0)
+			spacer.custom_minimum_size = Vector2(66.0, 46.0)
 			_calendar.add_child(spacer)
 			continue
 		var date := _date_string(day)
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(58.0, 42.0)
+		button.custom_minimum_size = Vector2(66.0, 46.0)
 		var pending := pending_count(date)
 		button.text = "%d" % day if pending == 0 else "%d ·" % day
 		button.tooltip_text = "待办 %d 条，未完成 %d 条" % [todo_count(date), pending]
