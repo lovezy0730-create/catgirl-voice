@@ -62,9 +62,9 @@ godot --path <本目录路径>
 
 ## 待机动作
 
-- **呼吸**：`main.tscn` 的 `idle_breathe` 同时动三条轨道 —— 上下浮动、轻微挤压（`scale` 1 → 1.012/0.98）、左右摆动（`rotation` ±0.018 弧度），周期 3.6 秒。
+- **呼吸**：`main.tscn` 的 `idle_breathe` 同时动三条轨道 —— 上下浮动 22 px、轻微挤压（`scale` 1 → 1.018/0.968）、左右摆动（`rotation` ±0.022 弧度），周期 4 秒，`loop_mode = 1` 常驻循环。注意：Animation 资源默认不循环，漏掉 `loop_mode` 就只会放一遍。
 - **眨眼**：`eyes_half.png` + `eyes_closed.png` 两张叠图，间隔 3~8 秒随机播放半睁 → 闭 → 半睁 → 睁。
-- **耳朵抖动**：角色目录里放 `ears.png`（只改耳朵的叠图）就会每 5~12 秒抖两下；没有这个文件就自动跳过。
+- **耳朵抖动**：角色目录里放 `ears.png`（只改耳朵的叠图）就会动起来：每 2.5~6.5 秒从四种节奏里随机挑一种 —— 短促一下、连抖两下、慢抬一下、快速抖三下；抬起时淡入并轻轻张开（`scale`/`rotation` 微动），放下时淡出，双击桌宠也会抖一下。没有这个文件就自动跳过。
 
 三张叠图都由 `tools/prepare-character-art.mjs` 从模型生成的变体图加工而来，做法见 [character/README.md](character/README.md)。
 

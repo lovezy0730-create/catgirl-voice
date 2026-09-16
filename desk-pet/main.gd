@@ -36,7 +36,13 @@ const TARGET_SPRITE_HEIGHT := 560.0
 const BUBBLE_HOLD_SECONDS := 3.5
 const BLINK_HALF_SECONDS := 0.06
 const BLINK_CLOSED_SECONDS := 0.09
-const EAR_TWITCH_SECONDS := 0.14
+## 耳朵抖动的节奏库：短促一下、连抖两下、慢抬一下、快速抖三下。
+const EAR_PATTERNS := [
+	[{"hold": 0.07, "gap": 0.05}],
+	[{"hold": 0.11, "gap": 0.09}, {"hold": 0.11, "gap": 0.0}],
+	[{"hold": 0.34, "gap": 0.0}],
+	[{"hold": 0.06, "gap": 0.05}, {"hold": 0.06, "gap": 0.05}, {"hold": 0.06, "gap": 0.0}],
+]
 
 ## DeepSeek 余额：优先读环境变量，其次读 Codex 的 config.toml，避免把 Key 写进工程。
 const DEEPSEEK_BALANCE_URL := "https://api.deepseek.com/user/balance"
@@ -187,6 +193,7 @@ func _on_drag_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: i
 		return
 	if event.double_click:
 		speak()
+		twitch_ears()
 	elif event.pressed:
 		DisplayServer.window_start_drag()
 
@@ -582,7 +589,7 @@ func _schedule_next_ear_twitch() -> void:
 		_ears_timer.one_shot = true
 		add_child(_ears_timer)
 		_ears_timer.timeout.connect(_on_ears_timer_timeout)
-	_ears_timer.wait_time = randf_range(5.0, 12.0)
+	_ears_timer.wait_time = randf_range(2.5, 6.5)
 	_ears_timer.start()
 
 
@@ -591,17 +598,42 @@ func _on_ears_timer_timeout() -> void:
 	_schedule_next_ear_twitch()
 
 
-## 抖两下耳朵：抬起 -> 放下 -> 抬起 -> 放下。
+## 耳朵抖动：从四种节奏里随机挑一种，抬起时淡入并轻轻张开，放下时淡出。
 func twitch_ears() -> void:
 	if _ears == null or _ears_twitching:
 		return
 	_ears_twitching = true
-	for _round in 2:
-		_ears.visible = true
-		await get_tree().create_timer(EAR_TWITCH_SECONDS).timeout
-		_ears.visible = false
-		await get_tree().create_timer(EAR_TWITCH_SECONDS * 0.6).timeout
+	var pattern: Array = EAR_PATTERNS[randi() % EAR_PATTERNS.size()]
+	for pulse in pattern:
+		await _ear_pulse(float((pulse as Dictionary)["hold"]))
+		var gap := float((pulse as Dictionary)["gap"])
+		if gap > 0.0:
+			await get_tree().create_timer(gap).timeout
 	_ears_twitching = false
+
+
+func _ear_pulse(hold: float) -> void:
+	if _ears == null:
+		return
+	var base_scale := body.scale
+	_ears.visible = true
+	_ears.modulate.a = 0.0
+	_ears.scale = base_scale * Vector2(0.985, 0.975)
+	_ears.rotation = -0.01
+	var rise := create_tween().set_parallel(true)
+	rise.tween_property(_ears, "modulate:a", 1.0, 0.07)
+	rise.tween_property(_ears, "scale", base_scale * Vector2(1.006, 1.0), 0.09)
+	rise.tween_property(_ears, "rotation", 0.008, 0.09)
+	await get_tree().create_timer(hold).timeout
+	var fall := create_tween().set_parallel(true)
+	fall.tween_property(_ears, "modulate:a", 0.0, 0.1)
+	fall.tween_property(_ears, "scale", base_scale * Vector2(0.99, 0.98), 0.12)
+	fall.tween_property(_ears, "rotation", -0.008, 0.12)
+	await fall.finished
+	_ears.visible = false
+	_ears.modulate.a = 1.0
+	_ears.scale = base_scale
+	_ears.rotation = 0.0
 
 
 func _on_blink_timer_timeout() -> void:
