@@ -186,6 +186,10 @@ text = "查看 DeepSeek 余额"
 layout_mode = 2
 text = "待办备忘录"
 
+[node name="PomodoroButton" type="Button" parent="MenuPanel/VBox"]
+layout_mode = 2
+text = "番茄钟"
+
 [node name="QuitButton" type="Button" parent="MenuPanel/VBox"]
 layout_mode = 2
 text = "退出桌宠"
@@ -194,4 +198,5 @@ text = "退出桌宠"
 [connection signal="input_event" from="CharacterRoot/DragArea" to="." method="_on_drag_area_input_event"]
 [connection signal="pressed" from="MenuPanel/VBox/BalanceButton" to="." method="_on_balance_button_pressed"]
 [connection signal="pressed" from="MenuPanel/VBox/MemoButton" to="." method="_on_memo_button_pressed"]
+[connection signal="pressed" from="MenuPanel/VBox/PomodoroButton" to="." method="_on_pomodoro_button_pressed"]
 [connection signal="pressed" from="MenuPanel/VBox/QuitButton" to="." method="_on_quit_button_pressed"]

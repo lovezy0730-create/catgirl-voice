@@ -53,6 +53,7 @@ const HEAD_CENTER_X_RATIO := 0.434
 const ICON_SIDE_RATIO := 0.52
 
 const TODO_PANEL_SCRIPT := preload("res://todo_panel.gd")
+const POMODORO_PANEL_SCRIPT := preload("res://pomodoro_panel.gd")
 
 const PINK := Color("f472b6")
 const PINK_SOFT := Color("f9a8d4")
@@ -84,6 +85,7 @@ var _balance_text := ""
 var _balance_updated_at := 0.0
 var _drag_rect := Rect2()
 var _todo_panel: PanelContainer
+var _pomodoro_panel: PanelContainer
 
 
 func _ready() -> void:
@@ -113,6 +115,8 @@ func _update_passthrough() -> void:
 		area = area.merge(menu_panel.get_global_rect())
 	if _todo_panel != null and _todo_panel.visible:
 		area = area.merge(_todo_panel.get_global_rect())
+	if _pomodoro_panel != null and _pomodoro_panel.visible:
+		area = area.merge(_pomodoro_panel.get_global_rect())
 	var position := area.position
 	var size := area.size
 	DisplayServer.window_set_mouse_passthrough(PackedVector2Array([
@@ -135,6 +139,7 @@ func _style_menu() -> void:
 	menu_panel.add_theme_stylebox_override("panel", panel_box)
 	balance_button.text = "看看余额喵～"
 	$MenuPanel/VBox/MemoButton.text = "待办清单喵～"
+	$MenuPanel/VBox/PomodoroButton.text = "番茄钟喵～"
 	$MenuPanel/VBox/QuitButton.text = "退出桌宠喵～"
 	for button in menu_panel.get_node("VBox").get_children():
 		if button is not Button:
@@ -394,6 +399,48 @@ func _open_todo_panel() -> void:
 	_todo_panel.position = panel_position
 	_update_passthrough()
 	say("待办清单打开啦，点小方块就能划掉喵～")
+
+
+func _on_pomodoro_button_pressed() -> void:
+	_hide_menu()
+	_open_pomodoro_panel()
+
+
+## 打开番茄钟面板：专注 / 短休息 / 长休息与轮数都能自由设置。
+func _open_pomodoro_panel() -> void:
+	_hide_menu()
+	if _pomodoro_panel == null:
+		_pomodoro_panel = POMODORO_PANEL_SCRIPT.new()
+		_pomodoro_panel.name = "PomodoroPanel"
+		_pomodoro_panel.closed.connect(_update_passthrough)
+		_pomodoro_panel.phase_finished.connect(_on_pomodoro_phase_finished)
+		add_child(_pomodoro_panel)
+	if not _pomodoro_panel.visible:
+		_pomodoro_panel.open()
+	var viewport_size := get_viewport_rect().size
+	var panel_size := _pomodoro_panel.get_combined_minimum_size()
+	var panel_position := ((viewport_size - panel_size) / 2.0).floor()
+	panel_position.x = clampf(panel_position.x, 8.0, maxf(8.0, viewport_size.x - panel_size.x - 8.0))
+	panel_position.y = clampf(panel_position.y, 8.0, maxf(8.0, viewport_size.y - panel_size.y - 8.0))
+	_pomodoro_panel.position = panel_position
+	_update_passthrough()
+	if not _pomodoro_panel.is_running():
+		say("番茄钟打开啦，时长可以自己调喵～")
+
+
+## 换段时用气泡提醒，再响一声系统提示音。
+func _on_pomodoro_phase_finished(finished_mode: String, next_mode: String) -> void:
+	var message := "这一段结束啦喵～"
+	match finished_mode:
+		"focus":
+			message = "专注结束，长休息一下喵～" if next_mode == "long" else "专注结束，短休息一下喵～"
+		"short":
+			message = "短休息结束，继续下一个番茄喵～"
+		"long":
+			message = "长休息结束，回来继续喵～"
+	say(message)
+	if DisplayServer.has_method("beep"):
+		DisplayServer.beep()
 
 
 ## 确保 userdata/todo.md 存在并返回绝对路径，不存在就写入一份模板。
